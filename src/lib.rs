@@ -1,3 +1,4 @@
+use std::iter::FromIterator;
 /// A generic singly linked list.
 ///
 /// The `head` of the list is a `Link` type. A link is a `Box`ed `Node`.
@@ -137,9 +138,44 @@ impl<'a, T> Iterator for IterMut<'a, T> {
     }
 }
 
+impl FromIterator<i32> for SinglyLinkedList<i32> {
+    fn from_iter<T: IntoIterator<Item = i32>>(iter: T) -> Self {
+        let mut list = SinglyLinkedList::<i32>::new();
+
+        for i in iter {
+            list.push(i);
+        }
+
+        list
+    }
+}
+
+impl FromIterator<u32> for SinglyLinkedList<u32> {
+    fn from_iter<T: IntoIterator<Item = u32>>(iter: T) -> Self {
+        let mut list = SinglyLinkedList::<u32>::new();
+
+        for i in iter {
+            list.push(i);
+        }
+
+        list
+    }
+}
+
 #[cfg(test)]
 mod tests {
+    use std::collections::LinkedList;
+
     use super::*;
+
+    #[test]
+    fn linked_list_of_strings() {
+        let mut list = SinglyLinkedList::new();
+        list.push("rust");
+        list.push("bytes");
+        list.push("compiler");
+        assert_eq!(list.pop(), Some("compiler"));
+    }
 
     #[test]
     fn push_an_element_to_a_singly_linked_list() {
@@ -273,5 +309,64 @@ mod tests {
 
         list.back_mut().map(|node| *node = 780);
         assert_eq!(list.back(), Some(&780));
+    }
+
+    #[test]
+    fn collect_list_elements_into_vec() {
+        let mut list = SinglyLinkedList::new();
+
+        list.push(10);
+        list.push(20);
+        list.push(30);
+
+        let elements: Vec<i32> = list.iter().map(|&member| member * 2).collect();
+
+        assert_eq!(elements, vec![60, 40, 20]);
+    }
+
+    #[test]
+    fn collect_list_elements_into_another_list() {
+        let mut source = SinglyLinkedList::new();
+
+        source.push(10);
+        source.push(20);
+        source.push(30);
+
+        let dest: SinglyLinkedList<u32> = source.iter().map(|&member| member * 2).collect();
+
+        let mut dest_iter = dest.iter();
+        assert_eq!(dest_iter.next(), Some(&20));
+        assert_eq!(dest_iter.next(), Some(&40));
+        assert_eq!(dest_iter.next(), Some(&60));
+    }
+
+    #[test]
+    fn collect_list_elements_into_builtin_linked_list() {
+        let mut source = SinglyLinkedList::new();
+
+        source.push(10);
+        source.push(20);
+        source.push(30);
+
+        let dest: LinkedList<u32> = source.iter().map(|&member| member * 2).collect();
+
+        let mut dest_iter = dest.iter();
+        assert_eq!(dest_iter.next(), Some(&60));
+        assert_eq!(dest_iter.next(), Some(&40));
+        assert_eq!(dest_iter.next(), Some(&20));
+    }
+
+    #[test]
+    fn make_list_from_an_iterator() {
+        let iter = (10..15).into_iter();
+
+        let list = SinglyLinkedList::from_iter(iter);
+
+        let mut list_iter = list.iter();
+        assert_eq!(list_iter.next(), Some(&14));
+        assert_eq!(list_iter.next(), Some(&13));
+        assert_eq!(list_iter.next(), Some(&12));
+        assert_eq!(list_iter.next(), Some(&11));
+        assert_eq!(list_iter.next(), Some(&10));
     }
 }
